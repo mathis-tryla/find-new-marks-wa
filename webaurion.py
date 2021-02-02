@@ -50,13 +50,32 @@ def findMarks():
 			nbNotes = nbNotes.text
 			nbNotes = nbNotes.split()
 			nbNotes = nbNotes[0]
-			return nbNotes
+			checkMarksNumber(nbNotes)
 	finally:
 		pass
 		#driver.close()
 
+def storeMarksNumber(nbNotes):
+	fichier = open("nbNotes.txt", "w")
+	fichier.write(nbNotes)
+	fichier.close()
+
+def getPrevMarksNumber():
+	fichier = open("nbNotes.txt", "r")
+	result = fichier.read()
+	fichier.close()
+	return result
+
+def checkMarksNumber(nbNotes):
+	if getPrevMarksNumber() < nbNotes:
+		storeMarksNumber(nbNotes)
+		print("NOUVELLE NOTE !")
+		#print(nbNotes)
+	else:
+		print("Aucune nouvelle note ...")
+
 if __name__ == "__main__":
    login()
    getMyMarks()
-   note = findMarks() 
+   findMarks() 
 
