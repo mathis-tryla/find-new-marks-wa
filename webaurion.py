@@ -53,7 +53,7 @@ def findMarks():
 			checkMarksNumber(nbNotes)
 	finally:
 		pass
-		#driver.close()
+		driver.close()
 
 def storeMarksNumber(nbNotes):
 	fichier = open("nbNotes.txt", "w")
@@ -70,7 +70,6 @@ def checkMarksNumber(nbNotes):
 	if getPrevMarksNumber() < nbNotes:
 		storeMarksNumber(nbNotes)
 		print("NOUVELLE NOTE !")
-		#print(nbNotes)
 	else:
 		print("Aucune nouvelle note ...")
 
