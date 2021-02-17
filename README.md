@@ -13,6 +13,7 @@ Example: `dupont dupont100`
 5. Open `downloads.txt` file and edit it by writting your Download folder path on your computer by ending it by a '/'
 
 Example: `/home/dupont/Downloads/`
+
 5. Save it
 6. Go back to your terminal, and type :
     ```sh
