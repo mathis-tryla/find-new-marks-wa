@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys, os, csv, codecs, json, glob, time, shutil
+import sys, os, csv, glob, time, shutil
 
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
@@ -7,33 +7,49 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
+
+nbNotes_file = "nbNotes.txt"
+login_file = "login.txt"
+downloads_file = "downloads.txt"
+oldFile_file = "oldFile.txt"
 driver = webdriver.Chrome(ChromeDriverManager().install())
 driver.get("https://webaurion.centralelille.fr/faces/Login.xhtml")
 
+
 def login():
+    ids = getIds()
     pseudoinput = driver.find_element_by_xpath('//*[@id="username"]')
-    pseudoinput.send_keys('mtryla')
+    pseudoinput.send_keys(ids[0])
     pwdinput = driver.find_element_by_xpath('//*[@id="password"]')
-    pwdinput.send_keys('MWarrior62')
+    pwdinput.send_keys(ids[1])
     loginBtn = driver.find_element_by_xpath('//*[@id="formulaireSpring"]/div[4]')
     loginBtn.click()
+    
 
 def getMyMarks():
-    resultsLink = driver.find_element_by_xpath('//*[@id="form:sidebar"]/div/div[2]/ul/li[2]/a')
-    resultsLink.click()
-    ig2iLink = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@id="form:sidebar"]/div/div[2]/ul/li[2]/ul/li/a'))
-    )
-    ig2iLink.click()
-    mesNotesLink = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@id="form:sidebar"]/div/div[2]/ul/li[2]/ul/li/ul/li[1]/a'))
-    )
-    mesNotesLink.click()
+    try:
+        resultsLink = driver.find_element_by_xpath('//*[@id="form:sidebar"]/div/div[2]/ul/li[2]/a')
+        resultsLink.click()
+        ig2iLink = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@id="form:sidebar"]/div/div[2]/ul/li[2]/ul/li/a'))
+        )
+        ig2iLink.click()
+        mesNotesLink = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@id="form:sidebar"]/div/div[2]/ul/li[2]/ul/li/ul/li[1]/a'))
+        )
+        mesNotesLink.click()
+    except Exception as e:
+        print(e)
+        notify("ERREUR", "Identifiant ou mot de passe incorrecte", "Fin du programme")
+        print("Identifiant ou mot de passe incorrecte...")
+        print("Fin du programme")
+        driver.close()
+        exit(-1)
+
 
 def findMarks():
     try:
         searchbtn = driver.find_element_by_xpath('//*[@id="form:search"]')
-        #//*[@id="form:j_idt119"]
         # on renseigne un mot-clé pour rechercher une/des note(s) par matière
         if len(sys.argv) > 1:
             searchbox = WebDriverWait(driver, 10).until(
@@ -56,6 +72,7 @@ def findMarks():
         pass
         driver.close()
 
+
 def exportCsvMarks():
     exportBtn = driver.find_element_by_xpath('//*[@id="form:exportButton"]/span[2]')
     exportBtn.click()
@@ -63,26 +80,38 @@ def exportCsvMarks():
     exportCsvUtf.click()
     time.sleep(5)
 
+
+def getIds():
+    fichier = open(login_file, "r")
+    res = fichier.read()
+    result = res.split(" ")
+    fichier.close()
+    return result
+
+
 def storeMarksNumber(nbNotes):
-    fichier = open("nbNotes.txt", "w")
+    fichier = open(nbNotes_file, "w")
     fichier.write(nbNotes)
     fichier.close()
 
+
 def getPrevMarksNumber():
-    fichier = open("nbNotes.txt", "r")
+    fichier = open(nbNotes_file, "r")
     result = fichier.read()
     fichier.close()
     return result
+
 
 def checkMarksNumber(nbNotes):
     if getPrevMarksNumber() < nbNotes:
         storeMarksNumber(nbNotes)
         # TODO: modify argument of readCsvFile
         exportCsvMarks()
+        oldFile = "mesnotes.csv"
         newFile = getNewCsvFile()
-        oldDictionnary = readCsvFile("mesnotes.csv")
-        newDictionnary = readCsvFile(newFile)
-        os.remove(newFile)
+        oldDictionnary = readCsvFile(oldFile, 1)
+        newDictionnary = readCsvFile(newFile, 0)
+        os.rename(newFile, oldFile)
         newMarks = compareOldMarksNewOnes(oldDictionnary, newDictionnary)
         print(newMarks)
         if len(newMarks) > 0:
@@ -93,8 +122,9 @@ def checkMarksNumber(nbNotes):
                 time.sleep(3)
         print("NOUVELLE NOTE !")
     else:
-        notify("Aucune nouvelle NOTE", "test", "test1")
+        notify("Aucune nouvelle NOTE" , "Fin du programme", "Bye!")
         print("Aucune nouvelle note ...")
+
 
 def notify(title, subject, mark):
     t = '-title {!r}'.format(title)
@@ -102,9 +132,10 @@ def notify(title, subject, mark):
     m = '-message {!r}'.format(mark)
     os.system('terminal-notifier {}'.format(' '.join([m, t, s])))
 
-def readCsvFile(filename):
+
+def readCsvFile(filename, numRemove):
     tab = {}
-    with open(filename) as csv_file:
+    with open(filename, encoding="utf-8") as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=';')
         line_count = 0
         for row in csv_reader:
@@ -117,16 +148,24 @@ def readCsvFile(filename):
             tab[line_count] = line
             line_count += 1
         csv_file.close()
-    # os.remove(filename)
+    if numRemove == 1: os.remove(filename) 
     return tab
 
 
+def getDownloadPath():
+    fichier = open(downloads_file, "r")
+    result = fichier.read()
+    fichier.close()
+    return result
+
+
 def getNewCsvFile():
-    list_of_files = glob.glob('/Users/tryla/Downloads/*')
+    dlPath = getDownloadPath()
+    dlPath_files = dlPath + "*"
+    list_of_files = glob.glob(dlPath_files)
     latest_file = max(list_of_files, key=os.path.getctime)
     print("LATEST = " + latest_file)
     newOne = shutil.move(latest_file, './')
-    #os.remove(latest_file)
     return newOne
 
 
@@ -154,13 +193,11 @@ def compareOldMarksNewOnes(oldDict, newDict):
             if idMark == vN[0]:
                 result[line_count] = vN
                 line_count += 1
-    #print(result)
     return result
     
 
 
 if __name__ == "__main__":
-   login()
-   getMyMarks()
-   findMarks() 
-   
+    login()
+    getMyMarks()
+    findMarks() 
