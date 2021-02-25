@@ -1,19 +1,43 @@
 # -*- coding: utf-8 -*-
-import sys, os, csv, glob, time, shutil
+import sys, os, csv, glob, time, shutil, platform
 
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from playsound import playsound
+from ipaddress import IPv4Address  # for your IP address
+from pyairmore.request import AirmoreSession  # to create an AirmoreSession
+from pyairmore.services.messaging import MessagingService  # to send messages
 
 
+ip = '192.168.1.77'
+port = 2333
+phoneNumber = "0613600787"
 nbNotes_file = "nbNotes.txt"
 login_file = "login.txt"
 downloads_file = "downloads.txt"
 oldFile_file = "oldFile.txt"
 driver = webdriver.Chrome(ChromeDriverManager().install())
 driver.get("https://webaurion.centralelille.fr/faces/Login.xhtml")
+
+
+def createSession(ipAdr, port, msgContent):
+    ipV = IPv4Address(ipAdr)  # let's create an IP address object
+    # now create a session
+    session = AirmoreSession(ipV)
+    # if your port is not 2333
+    session = AirmoreSession(ipV, port)  # assuming it is 2334
+    session.is_server_running  # True if Airmore is running
+    was_accepted = session.request_authorization()
+    print(was_accepted)
+    sendSms(session, msgContent)
+
+
+def sendSms(session, msgContent):
+    service = MessagingService(session)
+    service.send_message(phoneNumber, msgContent)
 
 
 def login():
@@ -105,7 +129,6 @@ def getPrevMarksNumber():
 def checkMarksNumber(nbNotes):
     if getPrevMarksNumber() < nbNotes:
         storeMarksNumber(nbNotes)
-        # TODO: modify argument of readCsvFile
         exportCsvMarks()
         oldFile = "mesnotes.csv"
         newFile = getNewCsvFile()
@@ -118,11 +141,15 @@ def checkMarksNumber(nbNotes):
             for k, newMark in newMarks.items():
                 topic = newMark[1]
                 mark = newMark[2]
-                notify("NOUVELLE NOTE", topic, mark)
+                createSession(ip, port, "NOUVELLE NOTE : " + str(topic) + " tu as obtenu la note de " + str(mark) + "")
+                playsound('notification.mp3')
+                if platform.system() == 'Darwin':
+                    notify("NOUVELLE NOTE", topic, mark)
                 time.sleep(3)
         print("NOUVELLE NOTE !")
     else:
-        notify("Aucune nouvelle NOTE" , "Fin du programme", "Bye!")
+        if platform.system() == 'Darwin':
+            notify("Aucune nouvelle NOTE" , "Fin du programme", "Bye !")
         print("Aucune nouvelle note ...")
 
 
