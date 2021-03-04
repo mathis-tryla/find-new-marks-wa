@@ -141,9 +141,12 @@ def checkMarksNumber(nbNotes):
             for k, newMark in newMarks.items():
                 topic = newMark[1]
                 mark = newMark[2]
-                createSession(ip, port, "NOUVELLE NOTE : " + str(topic) + " tu as obtenu la note de " + str(mark) + "")
-                playsound('notification.mp3')
+                try:
+                    createSession(ip, port, "NOUVELLE NOTE : " + str(topic) + " tu as obtenu la note de " + str(mark) + "")
+                except:
+                    print("0 session created")
                 if platform.system() == 'Darwin':
+                    playsound('notification.mp3')
                     notify("NOUVELLE NOTE", topic, mark)
                 time.sleep(3)
         print("NOUVELLE NOTE !")
