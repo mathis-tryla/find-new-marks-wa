@@ -20,6 +20,7 @@ login_file = "login.txt"
 downloads_file = "downloads.txt"
 oldFile_file = "oldFile.txt"
 driver = webdriver.Chrome(ChromeDriverManager().install())
+# driver = webdriver.Safari()
 driver.get("https://webaurion.centralelille.fr/faces/Login.xhtml")
 
 
@@ -72,29 +73,29 @@ def getMyMarks():
 
 
 def findMarks():
-    try:
-        searchbtn = driver.find_element_by_xpath('//*[@id="form:search"]')
-        # on renseigne un mot-clé pour rechercher une/des note(s) par matière
-        if len(sys.argv) > 1:
-            searchbox = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="form:search-texte"]'))
-            ) 
-            searchbox.send_keys(sys.argv[1])
-            searchbtn.click()
-            return 0
-        # on recherche une/des nouvelle(s) note(s)
-        else:
-            searchbtn.click()
-            nbNotes = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="form:messages"]/div/ul/li/span'))
-            )
-            nbNotes = nbNotes.text
-            nbNotes = nbNotes.split()
-            nbNotes = nbNotes[0]
-            checkMarksNumber(nbNotes)
-    finally:
-        pass
-        driver.close()
+    answer = 'N'
+    searchbtn = driver.find_element_by_xpath('//*[@id="form:search"]')
+    # on renseigne un mot-clé pour rechercher une/des note(s) par matière
+    if len(sys.argv) > 1:
+        searchbox = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="form:search-texte"]'))
+        ) 
+        searchbox.send_keys(sys.argv[1])
+        searchbtn.click()
+        while answer == 'N':
+            answer = input("Have you ended up ? [y/N] ")
+    # on recherche une/des nouvelle(s) note(s)
+    else:
+        searchbtn.click()
+        nbNotes = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="form:messages"]/div/ul/li/span'))
+        )
+        nbNotes = nbNotes.text
+        nbNotes = nbNotes.split()
+        nbNotes = nbNotes[0]
+        checkMarksNumber(nbNotes)
+    driver.close()
+
 
 
 def exportCsvMarks():
