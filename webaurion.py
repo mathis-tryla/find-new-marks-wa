@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys, os, csv, glob, time, shutil
+import sys, os, csv, glob, time, shutil, platform, pathlib
 
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
@@ -122,7 +122,8 @@ def checkMarksNumber(nbNotes):
                 time.sleep(3)
         print("NOUVELLE NOTE !")
     else:
-        notify("Aucune nouvelle NOTE" , "Fin du programme", "Bye!")
+        if platform.system() != 'Windows':
+            notify("Aucune nouvelle NOTE" , "Fin du programme", "Bye!")
         print("Aucune nouvelle note ...")
 
 
@@ -161,11 +162,18 @@ def getDownloadPath():
 
 def getNewCsvFile():
     dlPath = getDownloadPath()
-    dlPath_files = dlPath + "*"
+    if platform.system() == 'Windows':
+        dlPath_files = dlPath + "\*"
+    else:
+        dlPath_files = dlPath + "/*"
     list_of_files = glob.glob(dlPath_files)
     latest_file = max(list_of_files, key=os.path.getctime)
     print("LATEST = " + latest_file)
-    newOne = shutil.move(latest_file, './')
+    current_dir_path = str(pathlib.Path().absolute())
+    if platform.system() == 'Windows':
+        newOne = shutil.move(latest_file, current_dir_path)
+    else:
+        newOne = shutil.move(latest_file, './')
     return newOne
 
 
