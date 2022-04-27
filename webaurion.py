@@ -22,8 +22,6 @@ def login():
     pseudoinput.send_keys(ids[0])
     pwdinput = driver.find_element_by_xpath('//*[@id="password"]')
     pwdinput.send_keys(ids[1])
-    loginBtn = driver.find_element_by_xpath('//*[@id="formulaireSpring"]/div[4]')
-    loginBtn.click()
     
 
 def getMyMarks():
